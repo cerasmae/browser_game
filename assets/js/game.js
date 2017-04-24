@@ -133,7 +133,7 @@ function initializeMenu(){
 
     characterColor = colors[randomBetween(0, colors.length)];
     characterRadius = 10;
-    score = 0;
+    // score = 0;
 }
 
 function Ball() {
