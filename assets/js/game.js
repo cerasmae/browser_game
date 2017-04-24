@@ -34,7 +34,6 @@ var clickX;
 var clickY;
 
 var playAgain = new rotatingBalls(0);
-var hasLost = false;
 
 var sameCounter = 0;
 var otherCounter = 0;
@@ -43,11 +42,8 @@ var sameCounterInc = 25;
 var showHow = false;
 var fontColor = '#000';
 
-var wingsAudio = new Howl({
-    src: ['assets/audio/wings.wav'],
-    autoplay: true,
-    loop: true
-}).play();
+var wingsAudio = new Audio('assets/audio/wings.wav');
+var paused = false;
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -82,7 +78,7 @@ function colorChooser(){
             if( selectedColors.indexOf(colors[i]) == -1 ){
                 currColor = colors[i];
                 selectedColors.push(currColor);
-                console.log('color: ', currColor, selectedColors.length);
+                // console.log('color: ', currColor, selectedColors.length);
                 return currColor;
             }
         }
@@ -103,11 +99,13 @@ function initializeGame(){
         colors[i] = randomColor();
     }
 
-    console.log('allColors: ', colors, colors.length);
+    // console.log('allColors: ', colors, colors.length);
 
     characterColor = colors[randomBetween(0, colors.length)];
     characterRadius = 10;
     score = 0;
+    sameCounter = 0;
+    otherCounter = 0;
 
     for( var i = 0; i < totalBalls; i++ ){
         balls.push(new Ball());
@@ -129,8 +127,9 @@ function leveling(totBalls, totColors){
 
 function initializeMenu(){
     menuBalls[0] = new playBall();
-    menuBalls[1] = new rotatingBalls(80)//(randomBetween(0, 180));
-    menuBalls[2] = new rotatingBalls(146)//(randomBetween(0, 180));
+    menuBalls[1] = new rotatingBalls(159)//(randomBetween(0, 180))//(80)//(randomBetween(0, 180));
+    menuBalls[2] = new rotatingBalls(100)//(randomBetween(0, 180))//(146)//(randomBetween(0, 180));
+    menuBalls[3] = new rotatingBalls(142)//(randomBetween(0, 180))
 
     characterColor = colors[randomBetween(0, colors.length)];
     characterRadius = 10;
@@ -139,36 +138,63 @@ function initializeMenu(){
 
 function Ball() {
     this.radius = randomBetween(10, 50);
-    this.x = randomBetween(0+this.radius, canvas.width-this.radius);
-    this.y = randomBetween(0+this.radius, canvas.height-this.radius);
+    this.entrance = true;
+    this.ctr = 0;
+
+    this.x = randomBetween(0, 2);
+    this.y = randomBetween(0, 2);
+
+    if( this.x < 1 ){
+        this.x = -this.radius;
+        this.dirx = randomBetween(3, 9);
+    } else{
+        this.x = canvas.width+this.radius;
+        this.dirx = randomBetween(-7, -2);
+    }
+
+    if( this.y < 1 ){
+        this.y = -this.radius;
+        this.diry = randomBetween(3, 9);
+    } else{
+        this.y = canvas.height+this.radius;
+        this.diry = randomBetween(-7, -2);
+    }
+
     this.inRangeX = false;
     this.inRangeY = false;
     this.repel = false;
 
     this.color = colorChooser();
 
-    this.dirx = randomBetween(-5,6);
-    this.diry = randomBetween(-5,6);
-
-    if( this.dirx == 0 ){
-        this.dirx = 1;
-    }
-
-    if( this.diry == 0 ){
-        this.diry = 1;
-    }
-
     this.update = function() {
         this.x += this.dirx;
         this.y += this.diry;
 
-        if (  this.x - this.radius <= 0 ||
-            this.x + this.radius >= canvas.width) {
-            this.dirx *= -1;
-        }
-        if (  this.y - this.radius <= 0 ||
-            this.y + this.radius >= canvas.height) {
-            this.diry *= -1;
+        if(!this.entrance){
+            if (  this.x - this.radius <= 0 ||
+                this.x + this.radius >= canvas.width) {
+                this.dirx *= -1;
+            }
+            if (  this.y - this.radius <= 0 ||
+                this.y + this.radius >= canvas.height) {
+                this.diry *= -1;
+            }
+        } else{
+            this.ctr++;
+            if( this.ctr > this.radius ){
+                this.dirx = randomBetween(-5, 6);
+                this.diry = randomBetween(-5, 6);
+
+                if( this.dirx == 0 ){
+                    this.dirx = 1;
+                }
+
+                if( this.diry == 0 ){
+                    this.diry = 1;
+                }
+
+                this.entrance = false;
+            }
         }
 
         return this;
@@ -217,6 +243,8 @@ function rotatingBalls(point){
     this.y = canvas.height/2;
     this.point = point;
 
+    // console.log("point: ", this.point);
+
     this.color = randomColor();
 
     this.update = function(){
@@ -254,7 +282,7 @@ function drawCharacter() {
 function world() {
 
     var nameBall;
-    console.log('showhow', showHow);
+    // console.log('showhow', showHow);
     clearCanvas();
 
     switch(beginGame){
@@ -271,8 +299,10 @@ function world() {
                     nameBall = 'Play';
                 } else if( i == 1 ){
                     nameBall = 'How';
-                } else{
+                } else if( i == 2) {
                     nameBall = 'Lights';
+                } else{
+                    nameBall = 'Music';
                 }
                 menuBalls[i].update().draw(nameBall);
             }
@@ -286,7 +316,7 @@ function world() {
         for (var i = 0; i < balls.length; i++) {
             if(getHypothenuse(mouseX, mouseY, balls[i].x, balls[i].y ) <=
                 characterRadius + balls[i].radius && mouseMoved ){
-                console.log(characterColor, balls[i].color);
+                // console.log(characterColor, balls[i].color);
                 if( balls[i].color == characterColor ){
                     score+=balls[i].radius;
                     selectedColors.splice( selectedColors.indexOf(balls[i].color), 1 );
@@ -329,9 +359,9 @@ function world() {
         }
 
 
-        if( characterRadius > 1000 ){
+        if( characterRadius > 1000 ){ //LOSE
             beginGame = 2;
-            hasLost = true;
+            initializeMenu();
         // characterRadius = 10;
         }
 
@@ -350,21 +380,37 @@ function world() {
                 nameBall = 'Again?                                                    ';
             } else if( i == 1 ){
                 nameBall = 'How ';
-            } else{
+            } else if( i == 2){
                 nameBall = 'Lights';
+            } else{
+                nameBall = 'Music';
             }
             menuBalls[i].update().draw(nameBall);
             }
 
         drawCharacter();
 
-    break;
+        break;
+
+    case 3:
+        for( var i = 0; i < balls.length; i++ ){
+            balls[i].draw();
+        }
+        drawCharacter();
+
+        context.fillStyle = fontColor;
+        context.fillText( 'Paused', mouseX, mouseY);
+        break;
 
     }
 
     var scoreText = 'Score: ';
     context.fillStyle = fontColor;
     context.fillText( scoreText+score, 50, 50);
+
+    var ballText = 'Ball Counter: ';
+    context.fillStyle = fontColor;
+    context.fillText( ballText+sameCounter, 50, 75);
 
 }
 
@@ -378,31 +424,51 @@ window.addEventListener('mousemove', function(e) {
 });
 
 window.addEventListener('click', function(e){
-  clickX = e.pageX;
-  clickY = e.pageY;
+    clickX = e.pageX;
+    clickY = e.pageY;
 
-        for(var i = 0; i < menuBalls.length; i++ ){
+    if( beginGame == 1 ){
+        beginGame = 3;
+    } else if(beginGame == 3){
+        beginGame = 1;
+    }
+
+    for(var i = 0; i < menuBalls.length; i++ ){
         if( getHypothenuse(clickX, clickY, menuBalls[i].x, menuBalls[i].y) < menuBalls[i].radius){
           switch( i ){
             case 0:
               beginGame = 1;
               initializeGame();
+              menuBalls = [];
               showHow = false;
               break;
             case 1:
-                showHow = true;
+                showHow = !showHow;
               break;
             case 2:
               if( defaultColor ){
                 defaultColor = false;
                 bckgrColor = "#2c2e30";
                 fontColor = '#fff';
+                characterColor = randomColor();
               } else{
                 defaultColor = true;
                 bckgrColor = "#fff";
                 fontColor = '#000';
+                characterColor = randomColor();
               }
               break;
+            case 3:
+                // console.log("should pause");
+                if( !paused ){
+                    wingsAudio.pause();
+                    paused = true;
+                } else{
+                    bg();
+                    paused = false;
+                }
+                
+                break;
           }
         }
     }
@@ -411,5 +477,10 @@ window.addEventListener('click', function(e){
 
 /////////////////////////////////////////////////////////////////////////////////////////
 initializeMenu();
+bg();
 // initializeGame();
-setInterval(world,30);
+var interval1 = setInterval(world,30);
+var interval2 = setInterval(bg, 120000);
+function bg(){
+    wingsAudio.play();
+}
