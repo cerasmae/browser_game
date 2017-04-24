@@ -13,7 +13,7 @@ var selectedColors = [];
 var balls = [];
 var characterColor;
 var characterRadius;
-var score;
+var score = 0;
 var scoreInc = 1000;
 
 var mouseMoved = false;
@@ -328,7 +328,7 @@ function world() {
                     balls[i].repel = true;
                     score -= 2;
                     sameScore = false;
-                    characterRadius *= 1.01;
+                    characterRadius *= 1.05;
                     otherCounter--;
                 }
             } else{
@@ -377,7 +377,7 @@ function world() {
         characterRadius = 20;
         for( var i = 0; i < menuBalls.length; i++){
             if( i == 0 ){
-                nameBall = 'Again?                                                    ';
+                nameBall = 'Again?                                                               ';
             } else if( i == 1 ){
                 nameBall = 'How ';
             } else if( i == 2){
