@@ -1,0 +1,19 @@
+* {
+    margin: 0;
+    padding: 0;
+    cursor: none;
+}
+
+html, body{
+    height: 100%;
+    width: 100%;
+
+}
+
+canvas {
+    display: block;
+    /*background: #6A6A6A;*/
+    transition: background 2s linear;
+    -webkit-transition: background 2s linear;
+    -moz-transition: background 2s linear;
+}
